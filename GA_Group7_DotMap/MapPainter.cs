@@ -3,6 +3,9 @@ using System.Drawing;
 
 namespace GA_Group7_DotMap
 {
+    /// <summary>
+    /// Draw all the cityblocks' borders.
+    /// </summary>
     public class MapPainter
     {
         private List<CityBlock> _blocks = new List<CityBlock>();

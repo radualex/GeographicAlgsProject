@@ -4,6 +4,9 @@ using System.Drawing;
 
 namespace GA_Group7_DotMap
 {
+    /// <summary>
+    /// Each cityblock, which is represented as a polygon, contians some positions, which contributes to the corners of the polygon.
+    /// </summary>
     public class CityBlock
     {
         private Graphics _graph = null;
