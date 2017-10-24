@@ -31,6 +31,7 @@ namespace GA_Group7_DotMap
         public void UpdateMessage(string message)
         {
             listOfDots.Clear();
+            Controls.Clear();
             var splitted = message.Trim().Split(new string[] { "\r\n" }, StringSplitOptions.None);
             for (int i = 0; i < splitted.Length; i++)
             {
