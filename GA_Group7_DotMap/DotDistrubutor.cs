@@ -96,13 +96,13 @@ namespace GA_Group7_DotMap
         {
             if ((random.Next(0, 200) > 100 && inSideCityBlockss == 1) || (inSideCityBlockss == 0 && random.Next(0, 102) > 100))
             {
-                int region = 0;
+                int region = 1;
                 int r = random.Next(0, 100);
-                if (r < Setting.WestPecrentage) region = 0;
-                else if (r < Setting.WestPecrentage + Setting.NorthPercentage) region = 1;
-                else if (r < Setting.WestPecrentage + Setting.SouthPercentage + Setting.NorthPercentage) region = 2;
-                else if (r < Setting.WestPecrentage + Setting.SouthPercentage + Setting.NorthPercentage + Setting.EastPercentage) region = 3;
-                else region = 4;
+                if (r < Setting.WestPecrentage) region = 1;
+                else if (r < Setting.WestPecrentage + Setting.NorthPercentage) region = 2;
+                else if (r < Setting.WestPecrentage + Setting.SouthPercentage + Setting.NorthPercentage) region = 3;
+                else if (r < Setting.WestPecrentage + Setting.SouthPercentage + Setting.NorthPercentage + Setting.EastPercentage) region = 4;
+                else region = 5;
                 _dots.Add(new Dot((Region)region, new PointF((float)i / Setting.Propotion, (float)j / Setting.Propotion)));
             }
         }

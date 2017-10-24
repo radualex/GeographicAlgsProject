@@ -59,7 +59,6 @@ namespace GA_Group7_DotMap
                         Text = splitted[i],
                         AutoSize = true
                     };
-
                     Controls.Add(label);
                 }
             }
