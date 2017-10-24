@@ -96,19 +96,20 @@ namespace GA_Group7_DotMap
         {
             if ((random.Next(0, 200) > 100 && inSideCityBlockss == 1) || (inSideCityBlockss == 0 && random.Next(0, 102) > 100))
             {
-                int region = 0;
+                int region = 1;
                 int r = random.Next(0, 100);
-                if (r < Setting.WestPecrentage) region = 0;
-                else if (r < Setting.WestPecrentage + Setting.NorthPercentage) region = 1;
-                else if (r < Setting.WestPecrentage + Setting.SouthPercentage + Setting.NorthPercentage) region = 2;
-                else if (r < Setting.WestPecrentage + Setting.SouthPercentage + Setting.NorthPercentage + Setting.EastPercentage) region = 3;
-                else region = 4;
+                if (r < Setting.WestPecrentage) region = 1;
+                else if (r < Setting.WestPecrentage + Setting.NorthPercentage) region = 2;
+                else if (r < Setting.WestPecrentage + Setting.SouthPercentage + Setting.NorthPercentage) region = 3;
+                else if (r < Setting.WestPecrentage + Setting.SouthPercentage + Setting.NorthPercentage + Setting.EastPercentage) region = 4;
+                else region = 5;
                 _dots.Add(new Dot((Region)region, new PointF((float)i / Setting.Propotion, (float)j / Setting.Propotion)));
             }
         }
 
         #endregion
 
+        //split into several algorithms: calculate radius, calculate number of dots per group.
         private void ApplyAggregationAlgorithm(int width, int height, float ratio)
         {
             _width = width;
@@ -131,6 +132,8 @@ namespace GA_Group7_DotMap
             ApplyAggregationAlgorithm(_dots, 0, 1, 0, 1);
         }
 
+        //rename into splitDots over groups. Side note: use IEnumerable instead of lists for better performance.For each is too slow this is why we
+        //have long running times when generating data or when calculating distribution when zooming in and out.
         private void ApplyAggregationAlgorithm(List<Dot> dots, double x1, double x2, double y1, double y2)
         {
             if (dots.Count > NumberOfDotsPerGroup)
