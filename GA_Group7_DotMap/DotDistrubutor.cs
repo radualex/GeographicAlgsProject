@@ -109,6 +109,7 @@ namespace GA_Group7_DotMap
 
         #endregion
 
+        //split into several algorithms: calculate radius, calculate number of dots per group.
         private void ApplyAggregationAlgorithm(int width, int height, float ratio)
         {
             _width = width;
@@ -131,6 +132,8 @@ namespace GA_Group7_DotMap
             ApplyAggregationAlgorithm(_dots, 0, 1, 0, 1);
         }
 
+        //rename into splitDots over groups. Side note: use IEnumerable instead of lists for better performance.For each is too slow this is why we
+        //have long running times when generating data or when calculating distribution when zooming in and out.
         private void ApplyAggregationAlgorithm(List<Dot> dots, double x1, double x2, double y1, double y2)
         {
             if (dots.Count > NumberOfDotsPerGroup)
