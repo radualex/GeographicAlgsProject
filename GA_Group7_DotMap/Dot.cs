@@ -18,12 +18,6 @@ namespace GA_Group7_DotMap
             get
             {
                 return ColorUtil.GetRainbowColor((int)Region);
-                //if (Region == Region.West) return ColorUtil.GetRainbowColor((int)Region.West);
-                //else if (Region == Region.South) return ColorUtil.GetRainbowColor((int)Region.South);
-                //else if (Region == Region.North) return ColorUtil.GetRainbowColor((int)Region.North);
-                //else if (Region == Region.East) return ColorUtil.GetRainbowColor((int)Region.East);
-                //else if (Region == Region.NonEU) return ColorUtil.GetRainbowColor((int)Region.NonEU);
-                //else return Color.White;
             }
         }
 

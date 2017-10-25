@@ -47,7 +47,7 @@ namespace GA_Group7_DotMap
 
                 m = l + l - v;
                 sv = (v - m) / v;
-                h *= 6.0;
+                h *=  7.2;
                 sextant = (int)h;
                 fract = h - sextant;
                 vsf = v * sv * fract;
@@ -113,7 +113,7 @@ namespace GA_Group7_DotMap
                 colorIndex = ratio * region;
             }
 
-            return HSL2RGB(colorIndex, 0.8, 0.6);
+            return HSL2RGB(colorIndex, 0.8 , 0.45);
         }
 
         private static double GetRandomNumber(double minimum, double maximum)

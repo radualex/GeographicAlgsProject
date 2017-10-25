@@ -254,6 +254,7 @@ namespace GA_Group7_DotMap
             return new PointF(position.X / dots.Count, position.Y / dots.Count);
         }
 
+        // not used in this program.
         private List<AggregatedDot> DetermineMainGroupSolution2(List<Dot> dots)
         {
             List<AggregatedDot> result = new List<AggregatedDot>();
