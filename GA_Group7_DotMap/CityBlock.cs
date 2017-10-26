@@ -10,8 +10,8 @@ namespace GA_Group7_DotMap
     public class CityBlock
     {
         private Graphics _graph = null;
+        // the coordinates (position) of its corners.
         private List<PointF> _coordinates = null;
-
         public List<PointF> Coordinates { get { return _coordinates; } }
         
         public CityBlock(List<PointF> coordinates)
@@ -28,11 +28,11 @@ namespace GA_Group7_DotMap
 
         private List<PointF> InitializeCoordinates(int width, int height, float ratio)
         {
-            // block information of the map, predefined.
             var arr = new List<PointF>();
             _coordinates.ForEach(point =>
             {
                 if (ratio < 1)
+                    // if ratio is less than 1, then we keep the map in the middle.
                     arr.Add(new PointF(point.X * width * ratio + (Math.Abs(1 - ratio)) * width / 2, point.Y * height * ratio + (Math.Abs(1 - ratio)) * height / 2));
                 else
                     arr.Add(new PointF(point.X * width * ratio, point.Y * height * ratio));

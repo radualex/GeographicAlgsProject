@@ -5,7 +5,7 @@
         // Raw data, Propotion * Propotion positions, each position can possibly contains 1 person.
         public static int Propotion = 1000;
         
-        // Population distribution. 60% from western eu, 15 percentage from northern eu ...
+        // Population distribution. 60% from western eu, 15% from northern eu ...
         public static int WestPecrentage = 60;
         public static int NorthPercentage = 15;
         public static int EastPercentage = 10;

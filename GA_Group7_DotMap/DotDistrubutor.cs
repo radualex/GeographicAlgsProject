@@ -30,12 +30,22 @@ namespace GA_Group7_DotMap
         public DotDistrubutor(MapPainter mapPainter)
         {
             _mapPainter = mapPainter;
-            GenerateData();
+            GeneratePositions();
         }
 
-        #region generate the fake data.
+        // Generate fake data.
+        // return a List<Dot>, where a dot means a person.
+        // and for each dot, it contains position and region.
+        #region generate data.
 
-        public void GenerateData()
+        /// <summary>
+        /// This method generates positions.
+        /// basically, for each position, it can possibly contians 1 person.
+        /// total number of people is defined by Setting.Propotion * Setting.Propotion
+        /// Note that for each position, it is not necessary to contains a person.
+        /// For each position, it has its own possibility that it contains a person.
+        /// </summary>
+        public void GeneratePositions()
         {
             _dots = new List<Dot>();
             var random = new Random();
@@ -50,7 +60,7 @@ namespace GA_Group7_DotMap
                 foreach (string coordination in splitsList)
                 {
                     var xy = coordination.Split(',');
-                    GenerateData(random, Convert.ToInt32(xy[0]), Convert.ToInt32(xy[1]), Convert.ToInt32(xy[2]));
+                    GeneratePeople(random, Convert.ToInt32(xy[0]), Convert.ToInt32(xy[1]), Convert.ToInt32(xy[2]));
                 }
             }
             // Otherwise create raw data.
@@ -71,6 +81,8 @@ namespace GA_Group7_DotMap
                                 polygonPoints.Add(new PointF(point.X * Setting.Propotion, point.Y * Setting.Propotion));
                             }
                             var checkPoint = new PointF(i, j);
+                            // for now, we only give 2 different values, 1 or 0, to indicate whether this position is in the busy area.
+                            // 1 means this dot is in busy area, 0 means not.
                             if (IsInPolygon(checkPoint, polygonPoints))
                             {
                                 if (k != 0) inSideSomeCityBlock = true;
@@ -78,12 +90,12 @@ namespace GA_Group7_DotMap
                                 if (inSideSomeCityBlock)
                                 {
                                     File.AppendAllText("Data.txt", i + "," + j + "," + 1 + "#");
-                                    GenerateData(random, i, j, 1);
+                                    GeneratePeople(random, i, j, 1);
                                 }
                                 else if(inSideEindhoven)
                                 {
                                     File.AppendAllText("Data.txt", i + "," + j + "," + 0 + "#");
-                                    GenerateData(random, i, j, 0);
+                                    GeneratePeople(random, i, j, 0);
                                 }
                             }
                         }
@@ -92,9 +104,12 @@ namespace GA_Group7_DotMap
             }
         }
 
-        private void GenerateData(Random random, int i, int j, int inSideCityBlockss)
+        // This method generates people based on the positions.
+        private void GeneratePeople(Random random, int i, int j, int inSideCityBlockss)
         {
-            if ((random.Next(0, 200) > 100 && inSideCityBlockss == 1) || (inSideCityBlockss == 0 && random.Next(0, 102) > 100))
+            // if this position is not in the busy area.
+            // we give 2% possibility that there is a person.
+            if ((random.Next(0, 200) > 100 && inSideCityBlockss == 1) || (inSideCityBlockss == 0 && random.Next(0, 100) > 98))
             {
                 int region = 1;
                 int r = random.Next(0, 100);
@@ -108,20 +123,23 @@ namespace GA_Group7_DotMap
         }
 
         #endregion
-
-        //split into several algorithms: calculate radius, calculate number of dots per group.
+        
         private void ApplyAggregationAlgorithm(int width, int height, float ratio)
         {
             _width = width;
             _height = height;
             _ratio = ratio;
-            _radius = Math.Max(Setting.BaseRadius, Convert.ToInt32(Math.Min(_width, _height) / (Setting.BaseNumberOfGroupsPerLine * _ratio * 5))); // divided by 5 for better display.
-            int newNumberOfDotsPerGroup = Convert.ToInt32(_dots.Count / ((Setting.BaseNumberOfGroupsPerLine * (_ratio < 1 ? _ratio * _ratio : _ratio)) * (Setting.BaseNumberOfGroupsPerLine * (_ratio < 1 ? _ratio * _ratio : _ratio)))) + 1;
+            int newNumberOfDotsPerGroup = CalculateNumberOfDotsPerGroup();
             newNumberOfDotsPerGroup = RoundNumberOfDotsPerGroup(newNumberOfDotsPerGroup);
+
+            // if the aggregation algorithm does not need to be applied again.
             if (NumberOfDotsPerGroup == newNumberOfDotsPerGroup) return;
+
             NumberOfDotsPerGroup = newNumberOfDotsPerGroup;
             _dotsAfterAggregation = new List<AggregatedDot>();
-            if (NumberOfDotsPerGroup == 1) // if it has zoomed in a lot, then we do not need to apply the aggreagation algorithm.
+
+            // if it has zoomed in a lot, then we do not need to apply the aggreagation algorithm.
+            if (NumberOfDotsPerGroup == 1) 
             {
                 foreach (Dot dot in _dots)
                 {
@@ -129,12 +147,34 @@ namespace GA_Group7_DotMap
                 }
                 return;
             }
-            ApplyAggregationAlgorithm(_dots, 0, 1, 0, 1);
+            SplitDotsIntoSmallGroups(_dots, 0, 1, 0, 1);
         }
 
-        //rename into splitDots over groups. Side note: use IEnumerable instead of lists for better performance.For each is too slow this is why we
-        //have long running times when generating data or when calculating distribution when zooming in and out.
-        private void ApplyAggregationAlgorithm(List<Dot> dots, double x1, double x2, double y1, double y2)
+        private void CalculateRadius()
+        {
+            _radius = Math.Max(Setting.BaseRadius, Convert.ToInt32(Math.Min(_width, _height) / (Setting.BaseNumberOfGroupsPerLine * _ratio * 5))); // divided by 5 for better display.
+        }
+
+        private int CalculateNumberOfDotsPerGroup()
+        {
+            return Convert.ToInt32(_dots.Count / ((Setting.BaseNumberOfGroupsPerLine * (_ratio < 1 ? _ratio * _ratio : _ratio)) * (Setting.BaseNumberOfGroupsPerLine * (_ratio < 1 ? _ratio * _ratio : _ratio)))) + 1;
+        }
+        
+        // for instance, numberOfDotsPerGroup = 10345, return value will be 10000.
+        // numberOfDotsPerGroup = 1245, return value will be 1000.
+        // numberOfDotsPerGroup = 6, return value will be 6.
+        private int RoundNumberOfDotsPerGroup(int numberOfDotsPerGroup)
+        {
+            if (numberOfDotsPerGroup < 10) return numberOfDotsPerGroup;
+            return Convert.ToInt32(Convert.ToInt32(numberOfDotsPerGroup.ToString().Substring(0, 1)) * Math.Pow(10, numberOfDotsPerGroup.ToString().Length - 1));
+        }
+
+        // The aggregation algorithm.
+        #region Aggregation algorithm.
+
+        // Split the whole map in to 4 sub pieces (left top, right top, left down, right down) recursively,
+        // until the number of people in that area meets its criteria (less than NumberOfDotsPerGroup).
+        private void SplitDotsIntoSmallGroups(List<Dot> dots, double x1, double x2, double y1, double y2)
         {
             if (dots.Count > NumberOfDotsPerGroup)
             {
@@ -152,20 +192,20 @@ namespace GA_Group7_DotMap
                     else if (dot.Position.X >= x1 && dot.Position.X <= xmid && dot.Position.Y >= ymid && dot.Position.Y <= y2) dotsArray[2].Add(dot);
                     else if (dot.Position.X >= xmid && dot.Position.X <= x2 && dot.Position.Y >= ymid && dot.Position.Y <= y2) dotsArray[3].Add(dot);
                 }
-                ApplyAggregationAlgorithm(dotsArray[0], x1, xmid, y1, ymid);
-                ApplyAggregationAlgorithm(dotsArray[1], xmid, x2, y1, ymid);
-                ApplyAggregationAlgorithm(dotsArray[2], x1, xmid, ymid, y2);
-                ApplyAggregationAlgorithm(dotsArray[3], xmid, x2, ymid, y2);
+                SplitDotsIntoSmallGroups(dotsArray[0], x1, xmid, y1, ymid);
+                SplitDotsIntoSmallGroups(dotsArray[1], xmid, x2, y1, ymid);
+                SplitDotsIntoSmallGroups(dotsArray[2], x1, xmid, ymid, y2);
+                SplitDotsIntoSmallGroups(dotsArray[3], xmid, x2, ymid, y2);
             }
             else
             {
-                var dotsInOneGroup = ApplyAggregationAlgorithm(dots);
-                if (dotsInOneGroup != null) _dotsAfterAggregation.AddRange(dotsInOneGroup);
+                var aggregatedDot = GetAggregatedDot(dots);
+                if (aggregatedDot != null) _dotsAfterAggregation.AddRange(aggregatedDot);
             }
         }
 
-        // Apply aggregation algoithm to this group of dots.
-        private List<AggregatedDot> ApplyAggregationAlgorithm(List<Dot> dots)
+        // Apply aggregation algoithm to a specific group.
+        private List<AggregatedDot> GetAggregatedDot(List<Dot> dots)
         {
             var returnDots = new List<AggregatedDot>();
             if (dots.Count > NumberOfDotsPerGroup * Setting.MinimumPercentageToShow)
@@ -176,6 +216,8 @@ namespace GA_Group7_DotMap
             return null;
         }
 
+        // this determines the main region of people inside a group.
+        // in other words, this decides the color of this group.
         private List<AggregatedDot> DetermineMainGroupSolution1(List<Dot> dots)
         {
             List<AggregatedDot> result = new List<AggregatedDot>();
@@ -220,7 +262,7 @@ namespace GA_Group7_DotMap
             return result;
         }
 
-        // Slow wrost case. O(n)
+        // Wrost case. O(n)
         private PointF ResolvePossibleOverLap(PointF poition)
         {
             var tempPosition = poition;
@@ -237,15 +279,9 @@ namespace GA_Group7_DotMap
             return tempPosition;
         }
 
-        // for instance, numberOfDotsPerGroup = 10345, return value will be 10000.
-        // numberOfDotsPerGroup = 1245, return value will be 1000.
-        // numberOfDotsPerGroup = 6, return value will be 6.
-        private int RoundNumberOfDotsPerGroup(int numberOfDotsPerGroup)
-        {
-            if (numberOfDotsPerGroup < 10) return numberOfDotsPerGroup;
-            return Convert.ToInt32(Convert.ToInt32(numberOfDotsPerGroup.ToString().Substring(0, 1)) * Math.Pow(10, numberOfDotsPerGroup.ToString().Length - 1));
-        }
+        #endregion
 
+        // This is not used in this program, we simply take the middle point's location as the location of the aggregation dot.
         private PointF CalculateMiddlePosition(List<Dot> dots)
         {
             PointF position = new PointF(0, 0);
@@ -257,7 +293,11 @@ namespace GA_Group7_DotMap
             return new PointF(position.X / dots.Count, position.Y / dots.Count);
         }
 
-        // not used in this program.
+        // Another solution for DetermineMainGroup (taking 2 groups), but it is not used in this program.
+        // It is not applied becuase it may cause a lot of overlap, and solving the overlap is expensive.
+        // Compared with the benefits it brings (less loss of information), we decided to abandon this solution.  
+        #region another solution
+
         private List<AggregatedDot> DetermineMainGroupSolution2(List<Dot> dots)
         {
             List<AggregatedDot> result = new List<AggregatedDot>();
@@ -324,6 +364,8 @@ namespace GA_Group7_DotMap
             return result;
         }
 
+        #endregion
+
         public void DrawDots(int width, int height, Graphics graph, float ratio)
         {
             ApplyAggregationAlgorithm(width, height, ratio);
@@ -333,6 +375,7 @@ namespace GA_Group7_DotMap
             }
         }
         
+        // To determine whether a dot is inside a polygon or not.
         public bool IsInPolygon(PointF checkPoint, List<PointF> polygonPoints)
         {
             int counter = 0;
@@ -369,23 +412,6 @@ namespace GA_Group7_DotMap
             {
                 return true;
             }
-        }
-    }
-
-    public class AggregatedDot
-    {
-        public Dot Dot { get;private set; }
-        public int Raduis { get;private set; }
-
-        public AggregatedDot(Dot dot, int raduis)
-        {
-            Dot = dot;
-            Raduis = raduis;
-        }
-        
-        public void DrawDot(int width, int height, Graphics graph, float ratio)
-        {
-            Dot.DrawDot(width, height, Raduis, graph, ratio);
         }
     }
 }
