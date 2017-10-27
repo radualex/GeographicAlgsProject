@@ -16,7 +16,7 @@ namespace GA_Group7_DotMap
         private MapPainter _mapPainter;
 
         private List<Dot> _dots = new List<Dot>();
-        private List<AggregatedDot> _dotsAfterAggregation = new List<AggregatedDot>();
+        private List<AggregatedDot> _aggregatedDots = new List<AggregatedDot>();
 
         private List<Dot> Dots { get { return _dots; } }
 
@@ -24,8 +24,8 @@ namespace GA_Group7_DotMap
         private int _width = 0;
         private int _height = 0;
         private float _ratio = 1;
-        
-        public int NumberOfDotsPerGroup { get;private set; }
+
+        public int NumberOfDotsPerGroup { get; private set; }
 
         public DotDistrubutor(MapPainter mapPainter)
         {
@@ -92,7 +92,7 @@ namespace GA_Group7_DotMap
                                     File.AppendAllText("Data.txt", i + "," + j + "," + 1 + "#");
                                     GeneratePeople(random, i, j, 1);
                                 }
-                                else if(inSideEindhoven)
+                                else if (inSideEindhoven)
                                 {
                                     File.AppendAllText("Data.txt", i + "," + j + "," + 0 + "#");
                                     GeneratePeople(random, i, j, 0);
@@ -123,7 +123,7 @@ namespace GA_Group7_DotMap
         }
 
         #endregion
-        
+
         private void ApplyAggregationAlgorithm(int width, int height, float ratio)
         {
             _width = width;
@@ -136,14 +136,14 @@ namespace GA_Group7_DotMap
             if (NumberOfDotsPerGroup == newNumberOfDotsPerGroup) return;
 
             NumberOfDotsPerGroup = newNumberOfDotsPerGroup;
-            _dotsAfterAggregation = new List<AggregatedDot>();
+            _aggregatedDots = new List<AggregatedDot>();
 
             // if it has zoomed in a lot, then we do not need to apply the aggreagation algorithm.
-            if (NumberOfDotsPerGroup == 1) 
+            if (NumberOfDotsPerGroup == 1)
             {
                 foreach (Dot dot in _dots)
                 {
-                    _dotsAfterAggregation.Add(new AggregatedDot(dot, Math.Max(Setting.BaseRadius, _radius)));
+                    _aggregatedDots.Add(new AggregatedDot(dot, Math.Max(Setting.BaseRadius, _radius)));
                 }
                 return;
             }
@@ -159,7 +159,7 @@ namespace GA_Group7_DotMap
         {
             return Convert.ToInt32(_dots.Count / ((Setting.BaseNumberOfGroupsPerLine * (_ratio < 1 ? _ratio * _ratio : _ratio)) * (Setting.BaseNumberOfGroupsPerLine * (_ratio < 1 ? _ratio * _ratio : _ratio)))) + 1;
         }
-        
+
         // for instance, numberOfDotsPerGroup = 10345, return value will be 10000.
         // numberOfDotsPerGroup = 1245, return value will be 1000.
         // numberOfDotsPerGroup = 6, return value will be 6.
@@ -200,7 +200,7 @@ namespace GA_Group7_DotMap
             else
             {
                 var aggregatedDot = GetAggregatedDot(dots);
-                if (aggregatedDot != null) _dotsAfterAggregation.AddRange(aggregatedDot);
+                if (aggregatedDot != null) _aggregatedDots.AddRange(aggregatedDot);
             }
         }
 
@@ -236,7 +236,7 @@ namespace GA_Group7_DotMap
                 else if (dot.Region == Region.South) south++;
                 else if (dot.Region == Region.NonEU) noneu++;
             }
-            double westpercentage = Convert.ToDouble(west) / dots.Count / Math.Sqrt(Setting.WestPecrentage); // somehow this root makes the result more realistic.
+            double westpercentage = Convert.ToDouble(west) / dots.Count / Math.Sqrt(Setting.WestPecrentage);
             double eastpercentage = Convert.ToDouble(east) / dots.Count / Math.Sqrt(Setting.EastPercentage);
             double southpercentage = Convert.ToDouble(south) / dots.Count / Math.Sqrt(Setting.SouthPercentage);
             double northpercentage = Convert.ToDouble(north) / dots.Count / Math.Sqrt(Setting.NorthPercentage);
@@ -249,24 +249,26 @@ namespace GA_Group7_DotMap
             numbers.Add(northpercentage);
             numbers.Add(noneupercentage);
 
-            var maxNumber = GetTheMaximumNumber(numbers);
+            var maxNumber = numbers.Max();
             if (maxNumber == westpercentage) mainGroup = Region.West;
             else if (maxNumber == eastpercentage) mainGroup = Region.East;
             else if (maxNumber == southpercentage) mainGroup = Region.South;
             else if (maxNumber == northpercentage) mainGroup = Region.North;
             else if (maxNumber == noneupercentage) mainGroup = Region.NonEU;
 
-            result.Add(new AggregatedDot(new Dot(mainGroup, ResolvePossibleOverLap(dots[dots.Count / 2].Position)), _radius));
-            //result.Add(new AggregatedDot(new Dot(mainGroup, dots[dots.Count / 2].Position), _radius));
+            //result.Add(new AggregatedDot(new Dot(mainGroup, ResolvePossibleOverLap(dots[dots.Count / 2].Position)), _radius));
+            result.Add(new AggregatedDot(new Dot(mainGroup, dots[dots.Count / 2].Position), _radius));
 
             return result;
         }
-
+        
+        // Temperoary disabled, because this slows the program.
+        // To enable it, uncomment line 259 and comment line 260.
         // Wrost case. O(n)
         private PointF ResolvePossibleOverLap(PointF poition)
         {
             var tempPosition = poition;
-            foreach (AggregatedDot dot in _dotsAfterAggregation)
+            foreach (AggregatedDot dot in _aggregatedDots)
             {
                 float distanceBetweenCenter = (float)Math.Sqrt(Math.Pow(dot.Dot.Position.X * _ratio * _width - tempPosition.X * _ratio * _width, 2) + Math.Pow(dot.Dot.Position.Y * _ratio * _height - tempPosition.Y * _ratio * _height, 2));
                 distanceBetweenCenter = (float)Math.Round(distanceBetweenCenter, 0);
@@ -331,7 +333,7 @@ namespace GA_Group7_DotMap
             numbers.Add(south);
             numbers.Add(noneu);
 
-            var maxNumber = GetTheMaximumNumber(numbers);
+            var maxNumber = numbers.Max();
             List<Dot> mainGroupDots = new List<Dot>();
             if (maxNumber == west) { mainGroup = Region.West; mainGroupDots = westDots; }
             else if (maxNumber == east) { mainGroup = Region.East; mainGroupDots = eastDots; }
@@ -340,7 +342,7 @@ namespace GA_Group7_DotMap
             else if (maxNumber == noneu) { mainGroup = Region.NonEU; mainGroupDots = nonEuDots; }
 
             numbers.Remove(maxNumber);
-            maxNumber = GetTheMaximumNumber(numbers);
+            maxNumber = numbers.Max();
             List<Dot> secondaryGroupDots = new List<Dot>();
             if (maxNumber == west) { secondaryGroup = Region.West; secondaryGroupDots = westDots; }
             else if (maxNumber == east) { secondaryGroup = Region.East; secondaryGroupDots = eastDots; }
@@ -354,27 +356,17 @@ namespace GA_Group7_DotMap
             return result;
         }
 
-        private double GetTheMaximumNumber(List<double> numbers)
-        {
-            double result = 0;
-            foreach (double number in numbers)
-            {
-                if (number >= result) result = number;
-            }
-            return result;
-        }
-
         #endregion
 
         public void DrawDots(int width, int height, Graphics graph, float ratio)
         {
             ApplyAggregationAlgorithm(width, height, ratio);
-            for (int i = 0; i < _dotsAfterAggregation.Count; i++)
+            for (int i = 0; i < _aggregatedDots.Count; i++)
             {
-                _dotsAfterAggregation[i].DrawDot(width, height, graph, ratio);
+                _aggregatedDots[i].DrawDot(width, height, graph, ratio);
             }
         }
-        
+
         // To determine whether a dot is inside a polygon or not.
         public bool IsInPolygon(PointF checkPoint, List<PointF> polygonPoints)
         {
@@ -412,6 +404,98 @@ namespace GA_Group7_DotMap
             {
                 return true;
             }
+        }
+
+        // Measure the accuracy of the aggregation algorithm.
+        public string MeasureAccuracy()
+        {
+            double aggregatedwest = 0;
+            double aggregatedeast = 0;
+            double aggregatedsouth = 0;
+            double aggregatednorth = 0;
+            double aggregatednoneu = 0;
+
+            double westpercentage = 0;
+            double eastpercentage = 0;
+            double southpercentage = 0;
+            double northpercentage = 0;
+            double noneupercentage = 0;
+
+            double originalwest = 0;
+            double originaleast = 0;
+            double originalsouth = 0;
+            double originalnorth = 0;
+            double originalnoneu = 0;
+
+            foreach (AggregatedDot dot in _aggregatedDots)
+            {
+                switch (dot.Dot.Region)
+                {
+                    case Region.West:
+                        aggregatedwest++;
+                        break;
+                    case Region.East:
+                        aggregatedeast++;
+                        break;
+                    case Region.South:
+                        aggregatedsouth++;
+                        break;
+                    case Region.North:
+                        aggregatednorth++;
+                        break;
+                    case Region.NonEU:
+                        aggregatednoneu++;
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            foreach (Dot dot in _dots)
+            {
+                switch (dot.Region)
+                {
+                    case Region.West:
+                        originalwest++;
+                        break;
+                    case Region.East:
+                        originaleast++;
+                        break;
+                    case Region.South:
+                        originalsouth++;
+                        break;
+                    case Region.North:
+                        originalnorth++;
+                        break;
+                    case Region.NonEU:
+                        originalnoneu++;
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            aggregatedwest *= NumberOfDotsPerGroup;
+            aggregatedeast *= NumberOfDotsPerGroup;
+            aggregatedsouth *= NumberOfDotsPerGroup;
+            aggregatednorth *= NumberOfDotsPerGroup;
+            aggregatednoneu *= NumberOfDotsPerGroup;
+
+            westpercentage = Math.Round(aggregatedwest / originalwest, 2);
+            eastpercentage = Math.Round(aggregatedeast / originaleast, 2);
+            southpercentage = Math.Round(aggregatedsouth / originalsouth, 2);
+            northpercentage = Math.Round(aggregatednorth / originalnorth, 2);
+            noneupercentage = Math.Round(aggregatednoneu / originalnoneu, 2);
+
+            string info = "";
+            info = "West EU: " + aggregatedwest + " / " + originalwest + " => " + westpercentage + "\r\n" +
+                 "East EU: " + aggregatedeast + " / " + originaleast + " => " + eastpercentage + "\r\n" +
+                  "South EU: " + aggregatedsouth + " / " + originalsouth + " => " + southpercentage + "\r\n" +
+                   "North EU: " + aggregatednorth + " / " + originalnorth + " => " + northpercentage + "\r\n" +
+                    "Non EU: " + aggregatednoneu + " / " + originalnoneu + " => " + noneupercentage + "\r\n" +
+                    "Total:" + _aggregatedDots.Count * NumberOfDotsPerGroup + " / " + _dots.Count + " => " + Math.Round(Convert.ToDouble(_aggregatedDots.Count) * NumberOfDotsPerGroup / _dots.Count, 2);
+
+            return info;
         }
     }
 }

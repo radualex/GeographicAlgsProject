@@ -28,11 +28,11 @@ namespace GA_Group7_DotMap
             }
         }
 
-        public void UpdateMessage(string message)
+        public void UpdateMessage(string dotInfo,string aggregationInfo)
         {
             listOfDots.Clear();
             Controls.Clear();
-            var splitted = message.Trim().Split(new string[] { "\r\n" }, StringSplitOptions.None);
+            var splitted = dotInfo.Trim().Split(new string[] { "\r\n" }, StringSplitOptions.None);
             for (int i = 0; i < splitted.Length; i++)
             {
                 if (i < splitted.Length - 1)
@@ -60,9 +60,17 @@ namespace GA_Group7_DotMap
                         Text = splitted[i],
                         AutoSize = true
                     };
+                    lastLabel = label;
                     Controls.Add(label);
                 }
             }
+            var label2 = new Label
+            {
+                Location = new Point(lastLabel.Location.X, lastLabel.Location.Y + 30),
+                Text = "Aggregation Information: \r\n Region: # people after aggregation / # people Before aggregation\r\n" + aggregationInfo,
+                AutoSize = true
+            };
+            Controls.Add(label2);
             Refresh();
         }
 
