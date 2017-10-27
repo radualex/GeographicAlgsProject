@@ -176,7 +176,7 @@ namespace GA_Group7_DotMap
         // until the number of people in that area meets its criteria (less than NumberOfDotsPerGroup).
         private void SplitDotsIntoSmallGroups(List<Dot> dots, double x1, double x2, double y1, double y2)
         {
-            if (dots.Count > NumberOfDotsPerGroup)
+            if (dots.Count > NumberOfDotsPerGroup * 1.5) // Let the tresh hold become 1.5 * NumberOfDotsPerGroup
             {
                 List<List<Dot>> dotsArray = new List<List<Dot>>();
                 for (int i = 0; i < 4; i++)
