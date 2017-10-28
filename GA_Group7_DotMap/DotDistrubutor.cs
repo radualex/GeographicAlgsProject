@@ -148,9 +148,8 @@ namespace GA_Group7_DotMap
                 }
                 return;
             }
-            _groupEuclideans = new List<double>();
             SplitDotsIntoSmallGroups(_dots, 0, 1, 0, 1);
-            ResolvePossibleOverLap();
+            //ResolvePossibleOverLap();
         }
         
         private int CalculateNumberOfDotsPerGroup()
@@ -197,7 +196,6 @@ namespace GA_Group7_DotMap
             }
             else
             {
-<<<<<<< HEAD
                 // The return list is design for alternative solutions.
                 // For this solution, the return list always contains exactly 1 aggregated Dot.
                 var aggregatedDots = GetAggregatedDot(dots);
@@ -207,18 +205,6 @@ namespace GA_Group7_DotMap
                     var averageEuclidean = Metrics.CalculateLocation(dots, aggregatedDots.First());
                     _groupEuclideans.Add(averageEuclidean);
                 }
-=======
-                var aggregatedDot = GetAggregatedDot(dots);
-                if (aggregatedDot != null)
-                {
-                    // The return list is design for alternative solutions.
-                    // For this solution, the return list always contains exactly 1 aggregated Dot.
-                    _aggregatedDots.AddRange(aggregatedDot);
-                    var averageEuclidean = Metrics.CalculateLocation(dots, aggregatedDot.First());
-                    _groupEuclideans.Add(averageEuclidean);
-                }
-                
->>>>>>> a4ec3bca2a7bef0c3dda6a8a6881f1726c1ceb9c
             }
         }
 
@@ -279,10 +265,7 @@ namespace GA_Group7_DotMap
             else if (maxNumber == noneupercentage) mainGroup = Region.NonEU;
 
             Circle circle = MinimumCoverCircle.GetMinimumCoverCircle(dots);
-
-            var middlePoint = dots[dots.Count / 2].Position;
-            var circleCenter = new PointF((float)circle.c.x, (float)circle.c.y);
-            result.Add(new AggregatedDot(new Dot(mainGroup, middlePoint), Math.Max((int)(circle.r * _ratio * Math.Min(_width, _height)), Setting.MinimumAggregationDotRadius)));
+            result.Add(new AggregatedDot(new Dot(mainGroup, new PointF((float)circle.c.x, (float)circle.c.y)), Math.Max((int)(circle.r * _ratio * Math.Min(_width, _height)), Setting.MinimumAggregationDotRadius)));
 
             return result;
         }
