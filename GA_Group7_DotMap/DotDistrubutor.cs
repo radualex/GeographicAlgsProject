@@ -196,7 +196,6 @@ namespace GA_Group7_DotMap
             }
             else
             {
-<<<<<<< HEAD
                 var aggregatedDot = GetAggregatedDot(dots);
                 if (aggregatedDot != null)
                 {
@@ -204,12 +203,10 @@ namespace GA_Group7_DotMap
                     var averageEuclidean = Metrics.CalculateLocation(dots, aggregatedDot.First());
                     _groupEuclideans.Add(averageEuclidean);
                 }
-=======
                 // The return list is design for alternative solutions.
                 // For this solution, the return list always contains exactly 1 aggregated Dot.
                 var aggregatedDots = GetAggregatedDot(dots);
                 if (aggregatedDots != null) _aggregatedDots.AddRange(aggregatedDots);
->>>>>>> 544c8d4e955e44af7e95c6bf4c9cd5437e7ec8a8
             }
         }
 
