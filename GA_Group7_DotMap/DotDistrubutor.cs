@@ -148,6 +148,7 @@ namespace GA_Group7_DotMap
                 }
                 return;
             }
+            _groupEuclideans = new List<double>();
             SplitDotsIntoSmallGroups(_dots, 0, 1, 0, 1);
             //ResolvePossibleOverLap();
         }
@@ -266,7 +267,10 @@ namespace GA_Group7_DotMap
             else if (maxNumber == noneupercentage) mainGroup = Region.NonEU;
 
             Circle circle = MinimumCoverCircle.GetMinimumCoverCircle(dots);
-            result.Add(new AggregatedDot(new Dot(mainGroup, new PointF((float)circle.c.x, (float)circle.c.y)), Math.Max((int)(circle.r * _ratio * Math.Min(_width, _height)), Setting.MinimumAggregationDotRadius)));
+
+            var middlePoint = dots[dots.Count / 2].Position;
+            var circleCenter = new PointF((float)circle.c.x, (float)circle.c.y);
+            result.Add(new AggregatedDot(new Dot(mainGroup, middlePoint), Math.Max((int)(circle.r * _ratio * Math.Min(_width, _height)), Setting.MinimumAggregationDotRadius)));
 
             return result;
         }
