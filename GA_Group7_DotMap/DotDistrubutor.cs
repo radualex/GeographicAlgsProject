@@ -57,6 +57,7 @@ namespace GA_Group7_DotMap
                 }
                 return;
             }
+            _groupEuclideans = new List<double>();
             SplitDotsIntoSmallGroups(_dots, 0, 1, 0, 1);
             //ResolvePossibleOverLap();
         }
