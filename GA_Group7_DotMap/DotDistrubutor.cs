@@ -26,6 +26,8 @@ namespace GA_Group7_DotMap
 
         public int NumberOfDotsPerGroup { get; private set; }
 
+
+        private List<double> _groupEuclideans = new List<double>();
         public DotDistrubutor(MapPainter mapPainter)
         {
             _mapPainter = mapPainter;
@@ -194,6 +196,13 @@ namespace GA_Group7_DotMap
             }
             else
             {
+                var aggregatedDot = GetAggregatedDot(dots);
+                if (aggregatedDot != null)
+                {
+                    _aggregatedDots.AddRange(aggregatedDot);
+                    var averageEuclidean = Metrics.CalculateLocation(dots, aggregatedDot.First());
+                    _groupEuclideans.Add(averageEuclidean);
+                }
                 // The return list is design for alternative solutions.
                 // For this solution, the return list always contains exactly 1 aggregated Dot.
                 var aggregatedDots = GetAggregatedDot(dots);
@@ -452,10 +461,16 @@ namespace GA_Group7_DotMap
                     "Non EU: " + aggregatednoneu + " / " + originalnoneu + " => " + noneupercentage + "\r\n" +
                     "Total:" + _aggregatedDots.Count * NumberOfDotsPerGroup + " / " + _dots.Count + " => " + Math.Round(Convert.ToDouble(_aggregatedDots.Count) * NumberOfDotsPerGroup / _dots.Count, 2);
 
+            info += "\r\n" + MeasureLocationAccuracy();
             return info;
         }
-
-
+        public string MeasureLocationAccuracy()
+        {
+            double sum = 0;
+            _groupEuclideans.ForEach(x => sum += x);
+            var result = sum / _groupEuclideans.Count;
+            return "Average euclidean distance: " + result.ToString();
+        }
 
         // -----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -533,6 +548,5 @@ namespace GA_Group7_DotMap
             return result;
         }
         #endregion
-
     }
 }
