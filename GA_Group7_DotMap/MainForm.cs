@@ -144,7 +144,7 @@ namespace GA_Group7_DotMap
         private void panel_main_MouseClick(object sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Right)
-                contextMenu.Show(panel_main, new Point(e.X, e.Y));
+                contextMenu.Show(panel_main, new System.Drawing.Point(e.X, e.Y));
         }
 
         private string GetMessage(int number)

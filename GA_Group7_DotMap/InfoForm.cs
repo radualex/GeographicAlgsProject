@@ -41,7 +41,7 @@ namespace GA_Group7_DotMap
                     listOfDots.Add(rectangle);
                     var label = new Label
                     {
-                        Location = new Point(rectangle.X + 20, rectangle.Y),
+                        Location = new System.Drawing.Point(rectangle.X + 20, rectangle.Y),
                         Text = splitted[i],
                         AutoSize = true
                     };
@@ -56,7 +56,7 @@ namespace GA_Group7_DotMap
                 {
                     var label = new Label
                     {
-                        Location = new Point(lastLabel.Location.X, lastLabel.Location.Y + 20),
+                        Location = new System.Drawing.Point(lastLabel.Location.X, lastLabel.Location.Y + 20),
                         Text = splitted[i],
                         AutoSize = true
                     };
@@ -66,7 +66,7 @@ namespace GA_Group7_DotMap
             }
             var label2 = new Label
             {
-                Location = new Point(lastLabel.Location.X, lastLabel.Location.Y + 30),
+                Location = new System.Drawing.Point(lastLabel.Location.X, lastLabel.Location.Y + 30),
                 Text = "Aggregation Information: \r\n Region: # people after aggregation / # people Before aggregation\r\n" + aggregationInfo,
                 AutoSize = true
             };

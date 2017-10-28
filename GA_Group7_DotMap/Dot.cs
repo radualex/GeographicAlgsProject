@@ -9,9 +9,10 @@ namespace GA_Group7_DotMap
     public class Dot
     {
         private Graphics _graph = null;
+        private PointF _position;
 
         public Region Region { get; private set; }
-        public PointF Position { get; private set; }
+        public PointF Position { get { return _position; } set { _position = value; } }
 
         // each color represnts one region.
         public Color Color
@@ -25,9 +26,9 @@ namespace GA_Group7_DotMap
         public Dot(Region region, PointF position)
         {
             Region = region;
-            Position = position;
+            _position = position;
         }
-
+        
         public void DrawDot(int width, int height, float raduis, Graphics graph, float ratio)
         {
             _graph = graph;
@@ -45,12 +46,18 @@ namespace GA_Group7_DotMap
     public class AggregatedDot
     {
         public Dot Dot { get; private set; }
-        public int Raduis { get; private set; }
+        private int _raduis;
+        public int Raduis
+        {
+            get { return _raduis; }
+            set { _raduis = Math.Max(Setting.MinimumAggregationDotRadius, value);
+            }
+        }
 
         public AggregatedDot(Dot dot, int raduis)
         {
             Dot = dot;
-            Raduis = raduis;
+            _raduis = raduis;
         }
 
         public void DrawDot(int width, int height, Graphics graph, float ratio)

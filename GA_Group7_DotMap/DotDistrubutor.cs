@@ -19,8 +19,7 @@ namespace GA_Group7_DotMap
         private List<AggregatedDot> _aggregatedDots = new List<AggregatedDot>();
 
         private List<Dot> Dots { get { return _dots; } }
-
-        private int _radius = Setting.BaseRadius;
+        
         private int _width = 0;
         private int _height = 0;
         private float _ratio = 1;
@@ -143,18 +142,14 @@ namespace GA_Group7_DotMap
             {
                 foreach (Dot dot in _dots)
                 {
-                    _aggregatedDots.Add(new AggregatedDot(dot, Math.Max(Setting.BaseRadius, _radius)));
+                    _aggregatedDots.Add(new AggregatedDot(dot, Setting.MinimumAggregationDotRadius));
                 }
                 return;
             }
             SplitDotsIntoSmallGroups(_dots, 0, 1, 0, 1);
+            //ResolvePossibleOverLap();
         }
-
-        private void CalculateRadius()
-        {
-            _radius = Math.Max(Setting.BaseRadius, Convert.ToInt32(Math.Min(_width, _height) / (Setting.BaseNumberOfGroupsPerLine * _ratio * 5))); // divided by 5 for better display.
-        }
-
+        
         private int CalculateNumberOfDotsPerGroup()
         {
             return Convert.ToInt32(_dots.Count / ((Setting.BaseNumberOfGroupsPerLine * (_ratio < 1 ? _ratio * _ratio : _ratio)) * (Setting.BaseNumberOfGroupsPerLine * (_ratio < 1 ? _ratio * _ratio : _ratio)))) + 1;
@@ -199,12 +194,16 @@ namespace GA_Group7_DotMap
             }
             else
             {
-                var aggregatedDot = GetAggregatedDot(dots);
-                if (aggregatedDot != null) _aggregatedDots.AddRange(aggregatedDot);
+                // The return list is design for alternative solutions.
+                // For this solution, the return list always contains exactly 1 aggregated Dot.
+                var aggregatedDots = GetAggregatedDot(dots);
+                if (aggregatedDots != null) _aggregatedDots.AddRange(aggregatedDots);
             }
         }
 
         // Apply aggregation algoithm to a specific group.
+        // The return list is design for alternative solutions.
+        // For this solution, the return list always contains exactly 1 aggregated Dot.
         private List<AggregatedDot> GetAggregatedDot(List<Dot> dots)
         {
             var returnDots = new List<AggregatedDot>();
@@ -218,6 +217,8 @@ namespace GA_Group7_DotMap
 
         // this determines the main region of people inside a group.
         // in other words, this decides the color of this group.
+        // The return list is design for alternative solutions.
+        // For this solution, the return list always contains exactly 1 aggregated Dot.
         private List<AggregatedDot> DetermineMainGroupSolution1(List<Dot> dots)
         {
             List<AggregatedDot> result = new List<AggregatedDot>();
@@ -256,104 +257,38 @@ namespace GA_Group7_DotMap
             else if (maxNumber == northpercentage) mainGroup = Region.North;
             else if (maxNumber == noneupercentage) mainGroup = Region.NonEU;
 
-            //result.Add(new AggregatedDot(new Dot(mainGroup, ResolvePossibleOverLap(dots[dots.Count / 2].Position)), _radius));
-            result.Add(new AggregatedDot(new Dot(mainGroup, dots[dots.Count / 2].Position), _radius));
+            Circle circle = MinimumCoverCircle.GetMinimumCoverCircle(dots);
+            result.Add(new AggregatedDot(new Dot(mainGroup, new PointF((float)circle.c.x, (float)circle.c.y)), Math.Max((int)(circle.r * _ratio * Math.Min(_width, _height)), Setting.MinimumAggregationDotRadius)));
 
             return result;
         }
-        
-        // Temperoary disabled, because this slows the program.
-        // To enable it, uncomment line 259 and comment line 260.
-        // Wrost case. O(n)
-        private PointF ResolvePossibleOverLap(PointF poition)
+
+        // Wrost case. O(n^3)
+        // When resolving the overlap, we ignore the minimum radius requirement, which is set to 4.
+        // The minimum raduis will be 1 if overlap occurs.
+        // 1. try to lower the radius, so two overlap dots can fit.
+        // 2. if two dots are fully overlaped (the center is the same),
+        // we make them both radius  = 1 and rearrage the position (one of them will be moved to right with 1 pixel).
+        private void ResolvePossibleOverLap()
         {
-            var tempPosition = poition;
-            foreach (AggregatedDot dot in _aggregatedDots)
+            foreach (AggregatedDot dot1 in _aggregatedDots)
             {
-                float distanceBetweenCenter = (float)Math.Sqrt(Math.Pow(dot.Dot.Position.X * _ratio * _width - tempPosition.X * _ratio * _width, 2) + Math.Pow(dot.Dot.Position.Y * _ratio * _height - tempPosition.Y * _ratio * _height, 2));
-                distanceBetweenCenter = (float)Math.Round(distanceBetweenCenter, 0);
-                if (distanceBetweenCenter < dot.Raduis)
+                foreach (AggregatedDot dot2 in _aggregatedDots)
                 {
-                    float propotion = dot.Raduis / distanceBetweenCenter;
-                    tempPosition = new PointF(dot.Dot.Position.X + (tempPosition.X - dot.Dot.Position.X) * propotion, dot.Dot.Position.Y + (tempPosition.Y - dot.Dot.Position.Y) * propotion);
+                    float distanceBetweenCenter = (float)Math.Sqrt(Math.Pow(dot1.Dot.Position.X * _ratio * _width - dot2.Dot.Position.X * _ratio * _width, 2) + Math.Pow(dot1.Dot.Position.Y * _ratio * _height - dot2.Dot.Position.Y * _ratio * _height, 2));
+                    if (dot2.Dot.Position == dot1.Dot.Position)
+                    {
+                        dot1.Raduis = 1;
+                        dot2.Raduis = 1;
+                        dot2.Dot.Position = new PointF(dot1.Dot.Position.X + 1 / (_ratio * _width), dot1.Dot.Position.Y);
+                    }
+                    if (distanceBetweenCenter > (dot1.Raduis + dot2.Raduis) / 2)
+                    {
+                        dot1.Raduis = Math.Max(1, Convert.ToInt32((dot1.Raduis / (dot1.Raduis + dot2.Raduis)) * distanceBetweenCenter));
+                        dot2.Raduis = Math.Max(1, Convert.ToInt32((dot2.Raduis / (dot1.Raduis + dot2.Raduis)) * distanceBetweenCenter));
+                    }
                 }
             }
-            return tempPosition;
-        }
-
-        #endregion
-
-        // This is not used in this program, we simply take the middle point's location as the location of the aggregation dot.
-        private PointF CalculateMiddlePosition(List<Dot> dots)
-        {
-            PointF position = new PointF(0, 0);
-            foreach (Dot dot in dots)
-            {
-                position.X += dot.Position.X;
-                position.Y += dot.Position.Y;
-            }
-            return new PointF(position.X / dots.Count, position.Y / dots.Count);
-        }
-
-        // Another solution for DetermineMainGroup (taking 2 groups), but it is not used in this program.
-        // It is not applied becuase it may cause a lot of overlap, and solving the overlap is expensive.
-        // Compared with the benefits it brings (less loss of information), we decided to abandon this solution.  
-        #region another solution
-
-        private List<AggregatedDot> DetermineMainGroupSolution2(List<Dot> dots)
-        {
-            List<AggregatedDot> result = new List<AggregatedDot>();
-            List<Dot> westDots = new List<Dot>();
-            List<Dot> northDots = new List<Dot>();
-            List<Dot> southDots = new List<Dot>();
-            List<Dot> eastDots = new List<Dot>();
-            List<Dot> nonEuDots = new List<Dot>();
-
-            Region mainGroup = Region.Error;
-            Region secondaryGroup = Region.Error;
-            int west = 0;
-            int east = 0;
-            int south = 0;
-            int north = 0;
-            int noneu = 0;
-
-            foreach (Dot dot in dots)
-            {
-                if (dot.Region == Region.West) { west++; westDots.Add(dot); }
-                else if (dot.Region == Region.East) { east++; eastDots.Add(dot); }
-                else if (dot.Region == Region.North) { north++; northDots.Add(dot); }
-                else if (dot.Region == Region.South) { south++; southDots.Add(dot); }
-                else if (dot.Region == Region.NonEU) { noneu++; nonEuDots.Add(dot); }
-            }
-
-            var numbers = new List<double>();
-            numbers.Add(west);
-            numbers.Add(east);
-            numbers.Add(north);
-            numbers.Add(south);
-            numbers.Add(noneu);
-
-            var maxNumber = numbers.Max();
-            List<Dot> mainGroupDots = new List<Dot>();
-            if (maxNumber == west) { mainGroup = Region.West; mainGroupDots = westDots; }
-            else if (maxNumber == east) { mainGroup = Region.East; mainGroupDots = eastDots; }
-            else if (maxNumber == north) { mainGroup = Region.North; mainGroupDots = northDots; }
-            else if (maxNumber == south) { mainGroup = Region.South; mainGroupDots = southDots; }
-            else if (maxNumber == noneu) { mainGroup = Region.NonEU; mainGroupDots = nonEuDots; }
-
-            numbers.Remove(maxNumber);
-            maxNumber = numbers.Max();
-            List<Dot> secondaryGroupDots = new List<Dot>();
-            if (maxNumber == west) { secondaryGroup = Region.West; secondaryGroupDots = westDots; }
-            else if (maxNumber == east) { secondaryGroup = Region.East; secondaryGroupDots = eastDots; }
-            else if (maxNumber == north) { secondaryGroup = Region.North; secondaryGroupDots = northDots; }
-            else if (maxNumber == south) { secondaryGroup = Region.South; secondaryGroupDots = southDots; }
-            else if (maxNumber == noneu) { secondaryGroup = Region.NonEU; secondaryGroupDots = nonEuDots; }
-
-            result.Add(new AggregatedDot(new Dot(mainGroup, CalculateMiddlePosition(mainGroupDots)), _radius));
-            result.Add(new AggregatedDot(new Dot(secondaryGroup, CalculateMiddlePosition(secondaryGroupDots)), _radius / 2));
-
-            return result;
         }
 
         #endregion
@@ -497,5 +432,85 @@ namespace GA_Group7_DotMap
 
             return info;
         }
+
+
+
+        // -----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+        // This is not used in this program, we simply take the middle point's location as the location of the aggregation dot.
+        private PointF CalculateMiddlePosition(List<Dot> dots)
+        {
+            PointF position = new PointF(0, 0);
+            foreach (Dot dot in dots)
+            {
+                position.X += dot.Position.X;
+                position.Y += dot.Position.Y;
+            }
+            return new PointF(position.X / dots.Count, position.Y / dots.Count);
+        }
+
+        // Another solution for DetermineMainGroup (taking 2 groups), but it is not used in this program.
+        // It is not applied becuase it may cause a lot of overlap, and solving the overlap is expensive.
+        // Compared with the benefits it brings (less loss of information), we decided to abandon this solution.  
+        #region another solution
+        private List<AggregatedDot> DetermineMainGroupSolution2(List<Dot> dots)
+        {
+            List<AggregatedDot> result = new List<AggregatedDot>();
+            List<Dot> westDots = new List<Dot>();
+            List<Dot> northDots = new List<Dot>();
+            List<Dot> southDots = new List<Dot>();
+            List<Dot> eastDots = new List<Dot>();
+            List<Dot> nonEuDots = new List<Dot>();
+
+            Region mainGroupRegion = Region.Error;
+            Region secondaryGroupRegion = Region.Error;
+            int west = 0;
+            int east = 0;
+            int south = 0;
+            int north = 0;
+            int noneu = 0;
+
+            foreach (Dot dot in dots)
+            {
+                if (dot.Region == Region.West) { west++; westDots.Add(dot); }
+                else if (dot.Region == Region.East) { east++; eastDots.Add(dot); }
+                else if (dot.Region == Region.North) { north++; northDots.Add(dot); }
+                else if (dot.Region == Region.South) { south++; southDots.Add(dot); }
+                else if (dot.Region == Region.NonEU) { noneu++; nonEuDots.Add(dot); }
+            }
+
+            var numbers = new List<double>();
+            numbers.Add(west);
+            numbers.Add(east);
+            numbers.Add(north);
+            numbers.Add(south);
+            numbers.Add(noneu);
+
+            var maxNumber = numbers.Max();
+            List<Dot> mainGroupDots = new List<Dot>();
+            if (maxNumber == west) { mainGroupRegion = Region.West; mainGroupDots = westDots; }
+            else if (maxNumber == east) { mainGroupRegion = Region.East; mainGroupDots = eastDots; }
+            else if (maxNumber == north) { mainGroupRegion = Region.North; mainGroupDots = northDots; }
+            else if (maxNumber == south) { mainGroupRegion = Region.South; mainGroupDots = southDots; }
+            else if (maxNumber == noneu) { mainGroupRegion = Region.NonEU; mainGroupDots = nonEuDots; }
+
+            numbers.Remove(maxNumber);
+            maxNumber = numbers.Max();
+            List<Dot> secondaryGroupDots = new List<Dot>();
+            if (maxNumber == west) { secondaryGroupRegion = Region.West; secondaryGroupDots = westDots; }
+            else if (maxNumber == east) { secondaryGroupRegion = Region.East; secondaryGroupDots = eastDots; }
+            else if (maxNumber == north) { secondaryGroupRegion = Region.North; secondaryGroupDots = northDots; }
+            else if (maxNumber == south) { secondaryGroupRegion = Region.South; secondaryGroupDots = southDots; }
+            else if (maxNumber == noneu) { secondaryGroupRegion = Region.NonEU; secondaryGroupDots = nonEuDots; }
+
+            Circle circle = MinimumCoverCircle.GetMinimumCoverCircle(dots);
+            result.Add(new AggregatedDot(new Dot(mainGroupRegion, new PointF((float)circle.c.x, (float)circle.c.y)), Math.Max((int)(circle.r * _ratio * Math.Min(_width, _height)), Setting.MinimumAggregationDotRadius)));
+            circle = MinimumCoverCircle.GetMinimumCoverCircle(dots);
+            result.Add(new AggregatedDot(new Dot(secondaryGroupRegion, new PointF((float)circle.c.x, (float)circle.c.y)), Math.Max((int)(circle.r * _ratio * Math.Min(_width, _height)), Setting.MinimumAggregationDotRadius)));
+
+            return result;
+        }
+        #endregion
+
     }
 }
