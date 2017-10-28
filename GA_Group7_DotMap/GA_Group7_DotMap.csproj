@@ -54,10 +54,8 @@
     <Compile Include="InfoForm.Designer.cs">
       <DependentUpon>InfoForm.cs</DependentUpon>
     </Compile>
-<<<<<<< HEAD
     <Compile Include="Metrics.cs" />
     <Compile Include="MinimumCoverCircle.cs" />
->>>>>>> 544c8d4e955e44af7e95c6bf4c9cd5437e7ec8a8
     <Compile Include="Setting.cs" />
     <Compile Include="Dot.cs" />
     <Compile Include="DotDistrubutor.cs" />

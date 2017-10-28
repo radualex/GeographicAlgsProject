@@ -445,8 +445,6 @@ namespace GA_Group7_DotMap
             info += "\r\n" + MeasureLocationAccuracy();
             return info;
         }
-
-<<<<<<< HEAD
         public string MeasureLocationAccuracy()
         {
             double sum = 0;
@@ -454,8 +452,6 @@ namespace GA_Group7_DotMap
             var result = sum / _groupEuclideans.Count;
             return "Average euclidean distance: " + result.ToString();
         }
-=======
-
 
         // -----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -533,7 +529,5 @@ namespace GA_Group7_DotMap
             return result;
         }
         #endregion
-
->>>>>>> 544c8d4e955e44af7e95c6bf4c9cd5437e7ec8a8
     }
 }
