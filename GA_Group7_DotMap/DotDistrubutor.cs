@@ -263,6 +263,8 @@ namespace GA_Group7_DotMap
             return result;
         }
 
+        // To enable resolve overlap, uncomment line 150.
+        // It is not enabled, because it takes O(n^3) time.
         // Wrost case. O(n^3)
         // When resolving the overlap, we ignore the minimum radius requirement, which is set to 4.
         // The minimum raduis will be 1 if overlap occurs.
@@ -271,18 +273,38 @@ namespace GA_Group7_DotMap
         // we make them both radius  = 1 and rearrage the position (one of them will be moved to right with 1 pixel).
         private void ResolvePossibleOverLap()
         {
+            List<AggregatedDot> tempAggregatedDots = new List<AggregatedDot>(_aggregatedDots);
+
+            for (int i = 0; i < tempAggregatedDots.Count; i++)
+            {
+                var tempDot = tempAggregatedDots[i];
+                bool containsOverlap = false;
+                foreach (AggregatedDot dot in _aggregatedDots)
+                {
+                    float distanceBetweenCenter = (float)Math.Sqrt(Math.Pow(tempDot.Dot.Position.X * _ratio * _width - dot.Dot.Position.X * _ratio * _width, 2) + Math.Pow(tempDot.Dot.Position.Y * _ratio * _height - dot.Dot.Position.Y * _ratio * _height, 2));
+                    if (distanceBetweenCenter < (tempAggregatedDots[i].Raduis + dot.Raduis) / 2)
+                    {
+                        tempDot.Raduis = Math.Max(1, Convert.ToInt32((tempDot.Raduis / (tempDot.Raduis + dot.Raduis)) * distanceBetweenCenter));
+                        dot.Raduis = Math.Max(1, Convert.ToInt32((dot.Raduis / (tempDot.Raduis + dot.Raduis)) * distanceBetweenCenter));
+                    }
+                }
+                _aggregatedDots.Add(tempDot);
+            }
+
             foreach (AggregatedDot dot1 in _aggregatedDots)
             {
                 foreach (AggregatedDot dot2 in _aggregatedDots)
                 {
+                    if (dot1 == dot2) continue;
                     float distanceBetweenCenter = (float)Math.Sqrt(Math.Pow(dot1.Dot.Position.X * _ratio * _width - dot2.Dot.Position.X * _ratio * _width, 2) + Math.Pow(dot1.Dot.Position.Y * _ratio * _height - dot2.Dot.Position.Y * _ratio * _height, 2));
                     if (dot2.Dot.Position == dot1.Dot.Position)
                     {
                         dot1.Raduis = 1;
                         dot2.Raduis = 1;
+                        // move dot2 one pixel to the right side.
                         dot2.Dot.Position = new PointF(dot1.Dot.Position.X + 1 / (_ratio * _width), dot1.Dot.Position.Y);
                     }
-                    if (distanceBetweenCenter > (dot1.Raduis + dot2.Raduis) / 2)
+                    if (distanceBetweenCenter < (dot1.Raduis + dot2.Raduis) / 2)
                     {
                         dot1.Raduis = Math.Max(1, Convert.ToInt32((dot1.Raduis / (dot1.Raduis + dot2.Raduis)) * distanceBetweenCenter));
                         dot2.Raduis = Math.Max(1, Convert.ToInt32((dot2.Raduis / (dot1.Raduis + dot2.Raduis)) * distanceBetweenCenter));
