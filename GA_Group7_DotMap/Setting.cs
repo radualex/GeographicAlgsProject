@@ -15,7 +15,8 @@
         public static int BorderWidth = 4;
         public static int CityBlockWidth = 2;
 
-        public static int BaseRadius = 4;
+        public static int MinimumAggregationDotRadius = 4; // When resolving the overlap, we ignore the minimum radius requirement.
+
         public static int BaseNumberOfGroupsPerLine = 1; // will be set to some number when the program starts.
 
         // for instance, each dots represents 1000 people,
