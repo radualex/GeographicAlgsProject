@@ -5,6 +5,7 @@ namespace GA_Group7_DotMap
 {
     public static class ColorUtil
     {
+        //Converter source: http://geekymonkey.com/Programming/CSharp/RGB2HSL_HSL2RGB.htm
         public struct ColorRGB
         {
             public byte R;
@@ -96,7 +97,6 @@ namespace GA_Group7_DotMap
 
         public static ColorRGB GetRainbowColor(int region, int nrOfRegions = 5)
         {
-            var rand = new Random();
             var ratio = (double)1 / nrOfRegions;
             double colorIndex;
 
