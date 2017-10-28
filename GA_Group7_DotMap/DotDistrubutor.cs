@@ -199,14 +199,13 @@ namespace GA_Group7_DotMap
                 var aggregatedDot = GetAggregatedDot(dots);
                 if (aggregatedDot != null)
                 {
+                    // The return list is design for alternative solutions.
+                    // For this solution, the return list always contains exactly 1 aggregated Dot.
                     _aggregatedDots.AddRange(aggregatedDot);
                     var averageEuclidean = Metrics.CalculateLocation(dots, aggregatedDot.First());
                     _groupEuclideans.Add(averageEuclidean);
                 }
-                // The return list is design for alternative solutions.
-                // For this solution, the return list always contains exactly 1 aggregated Dot.
-                var aggregatedDots = GetAggregatedDot(dots);
-                if (aggregatedDots != null) _aggregatedDots.AddRange(aggregatedDots);
+                
             }
         }
 
