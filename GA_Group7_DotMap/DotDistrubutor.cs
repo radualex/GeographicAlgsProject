@@ -149,7 +149,7 @@ namespace GA_Group7_DotMap
                 return;
             }
             SplitDotsIntoSmallGroups(_dots, 0, 1, 0, 1);
-            //ResolvePossibleOverLap();
+            ResolvePossibleOverLap();
         }
         
         private int CalculateNumberOfDotsPerGroup()
@@ -196,17 +196,15 @@ namespace GA_Group7_DotMap
             }
             else
             {
-                var aggregatedDot = GetAggregatedDot(dots);
-                if (aggregatedDot != null)
-                {
-                    _aggregatedDots.AddRange(aggregatedDot);
-                    var averageEuclidean = Metrics.CalculateLocation(dots, aggregatedDot.First());
-                    _groupEuclideans.Add(averageEuclidean);
-                }
                 // The return list is design for alternative solutions.
                 // For this solution, the return list always contains exactly 1 aggregated Dot.
                 var aggregatedDots = GetAggregatedDot(dots);
-                if (aggregatedDots != null) _aggregatedDots.AddRange(aggregatedDots);
+                if (aggregatedDots != null)
+                {
+                    _aggregatedDots.AddRange(aggregatedDots);
+                    var averageEuclidean = Metrics.CalculateLocation(dots, aggregatedDots.First());
+                    _groupEuclideans.Add(averageEuclidean);
+                }
             }
         }
 
@@ -273,52 +271,68 @@ namespace GA_Group7_DotMap
         }
 
         // To enable resolve overlap, uncomment line 150.
-        // It is not enabled, because it takes O(n^3) time.
-        // Wrost case. O(n^3)
+        // It is not enabled, because it takes O(n^3) time, which is slow.
+        // We use a greedy implementation.
+        // 1. Try to add as much points as possible in the first time. i.e ignore all overlap dots.
+        // 2. Try to add the overlap dots without effecting others.
         // When resolving the overlap, we ignore the minimum radius requirement, which is set to 4.
         // The minimum raduis will be 1 if overlap occurs.
-        // 1. try to lower the radius, so two overlap dots can fit.
-        // 2. if two dots are fully overlaped (the center is the same),
-        // we make them both radius  = 1 and rearrage the position (one of them will be moved to right with 1 pixel).
+        // Note that there will be no full overlap (same center), becasue we use the center of the minimum cover circle as the position of the dot.
+        // hence, they are all unique and raduis = 1 would be the value which will not cause any overlap with others.
         private void ResolvePossibleOverLap()
         {
+            float distanceBetweenCenter = 0;
             List<AggregatedDot> tempAggregatedDots = new List<AggregatedDot>(_aggregatedDots);
-
+            _aggregatedDots.Clear();
+            List<AggregatedDot> overlapDots = new List<AggregatedDot>();
             for (int i = 0; i < tempAggregatedDots.Count; i++)
             {
                 var tempDot = tempAggregatedDots[i];
                 bool containsOverlap = false;
                 foreach (AggregatedDot dot in _aggregatedDots)
                 {
-                    float distanceBetweenCenter = (float)Math.Sqrt(Math.Pow(tempDot.Dot.Position.X * _ratio * _width - dot.Dot.Position.X * _ratio * _width, 2) + Math.Pow(tempDot.Dot.Position.Y * _ratio * _height - dot.Dot.Position.Y * _ratio * _height, 2));
-                    if (distanceBetweenCenter < (tempAggregatedDots[i].Raduis + dot.Raduis) / 2)
+                    distanceBetweenCenter = (float)Math.Sqrt(Math.Pow(tempDot.Dot.Position.X * _ratio * _width - dot.Dot.Position.X * _ratio * _width, 2) + Math.Pow(tempDot.Dot.Position.Y * _ratio * _height - dot.Dot.Position.Y * _ratio * _height, 2));
+                    if (distanceBetweenCenter < (tempDot.Raduis + dot.Raduis) / 2)
                     {
-                        tempDot.Raduis = Math.Max(1, Convert.ToInt32((tempDot.Raduis / (tempDot.Raduis + dot.Raduis)) * distanceBetweenCenter));
-                        dot.Raduis = Math.Max(1, Convert.ToInt32((dot.Raduis / (tempDot.Raduis + dot.Raduis)) * distanceBetweenCenter));
+                        containsOverlap = true;
+                        overlapDots.Add(tempDot);
+                        break;
                     }
                 }
-                _aggregatedDots.Add(tempDot);
+                if (!containsOverlap) _aggregatedDots.Add(tempDot);
             }
 
-            foreach (AggregatedDot dot1 in _aggregatedDots)
+            foreach (AggregatedDot overlapDot in overlapDots)
             {
-                foreach (AggregatedDot dot2 in _aggregatedDots)
+                List<AggregatedDot> allDotsOverlapWithThisDot = new List<AggregatedDot>();
+                List<float> distances = new List<float>();
+                foreach (AggregatedDot d in _aggregatedDots)
                 {
-                    if (dot1 == dot2) continue;
-                    float distanceBetweenCenter = (float)Math.Sqrt(Math.Pow(dot1.Dot.Position.X * _ratio * _width - dot2.Dot.Position.X * _ratio * _width, 2) + Math.Pow(dot1.Dot.Position.Y * _ratio * _height - dot2.Dot.Position.Y * _ratio * _height, 2));
-                    if (dot2.Dot.Position == dot1.Dot.Position)
+                    distanceBetweenCenter = (float)Math.Sqrt(Math.Pow(overlapDot.Dot.Position.X * _ratio * _width - d.Dot.Position.X * _ratio * _width, 2) + Math.Pow(overlapDot.Dot.Position.Y * _ratio * _height - d.Dot.Position.Y * _ratio * _height, 2));
+                    if (distanceBetweenCenter < (overlapDot.Raduis + d.Raduis) / 2)
                     {
-                        dot1.Raduis = 1;
-                        dot2.Raduis = 1;
-                        // move dot2 one pixel to the right side.
-                        dot2.Dot.Position = new PointF(dot1.Dot.Position.X + 1 / (_ratio * _width), dot1.Dot.Position.Y);
-                    }
-                    if (distanceBetweenCenter < (dot1.Raduis + dot2.Raduis) / 2)
-                    {
-                        dot1.Raduis = Math.Max(1, Convert.ToInt32((dot1.Raduis / (dot1.Raduis + dot2.Raduis)) * distanceBetweenCenter));
-                        dot2.Raduis = Math.Max(1, Convert.ToInt32((dot2.Raduis / (dot1.Raduis + dot2.Raduis)) * distanceBetweenCenter));
+                        distances.Add(distanceBetweenCenter);
+                        allDotsOverlapWithThisDot.Add(d);
                     }
                 }
+
+                AggregatedDot closestDot = null;
+                for (int i = 0; i < distances.Count; i++)
+                {
+                    if (distances[i] == distances.Max())
+                    {
+                        distanceBetweenCenter = distances[i];
+                        closestDot = allDotsOverlapWithThisDot[i];
+                        break;
+                    }
+                }
+                // When resolving the overlap, we ignore the minimum radius requirement, which is set to 4 in Setting.cs
+                if (closestDot != null) // it is possible when solving the previous overlap, it also solve this overlap.
+                {
+                    overlapDot.Raduis = Math.Max(1, Convert.ToInt32((overlapDot.Raduis / (overlapDot.Raduis + closestDot.Raduis)) * distanceBetweenCenter));
+                    closestDot.Raduis = Math.Max(1, Convert.ToInt32((closestDot.Raduis / (overlapDot.Raduis + closestDot.Raduis)) * distanceBetweenCenter));
+                }
+                _aggregatedDots.Add(overlapDot);
             }
         }
 
@@ -373,7 +387,7 @@ namespace GA_Group7_DotMap
         }
 
         // Measure the accuracy of the aggregation algorithm.
-        public string MeasureAccuracy()
+        public string MeasureAggregationAccuracy()
         {
             double aggregatedwest = 0;
             double aggregatedeast = 0;
@@ -464,6 +478,7 @@ namespace GA_Group7_DotMap
             info += "\r\n" + MeasureLocationAccuracy();
             return info;
         }
+
         public string MeasureLocationAccuracy()
         {
             double sum = 0;
