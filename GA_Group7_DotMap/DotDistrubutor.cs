@@ -23,7 +23,7 @@ namespace GA_Group7_DotMap
         private int _width = 0;
         private int _height = 0;
         private float _ratio = 1;
-
+        private double _sumRadius = 0, _nrOfGroups = 0;
         public int NumberOfDotsPerGroup { get; private set; }
 
 
@@ -182,6 +182,7 @@ namespace GA_Group7_DotMap
             else if (maxNumber == noneupercentage) mainGroup = Region.NonEU;
 
             Circle circle = MinimumCoverCircle.GetMinimumCoverCircle(dots);
+            _sumRadius += circle.r; _nrOfGroups++;
             result.Add(new AggregatedDot(new Dot(mainGroup, new PointF((float)circle.c.x, (float)circle.c.y)), Math.Max((int)(circle.r * _ratio * Math.Min(_width, _height)), Setting.MinimumAggregationDotRadius)));
 
             return result;
