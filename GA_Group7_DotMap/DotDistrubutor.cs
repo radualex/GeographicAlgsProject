@@ -60,7 +60,7 @@ namespace GA_Group7_DotMap
             _groupEuclideans = new List<double>();
             SplitDotsIntoSmallGroups(_dots, 0, 1, 0, 1);
             _beforeOverlapFix = new List<AggregatedDot>(_aggregatedDots);
-            ResolvePossibleOverLap();
+            //ResolvePossibleOverLap();
         }
 
         private int CalculateNumberOfDotsPerGroup()
@@ -181,7 +181,7 @@ namespace GA_Group7_DotMap
             return result;
         }
 
-        // To enable resolve overlap, uncomment line 61.
+        // To enable resolve overlap, uncomment line 63.
         // It is not enabled, because it takes O(n^2) time, which is slow.
         // We use a greedy implementation.
         // 1. Try to add as much points as possible in the first time. i.e ignore all overlap dots.
