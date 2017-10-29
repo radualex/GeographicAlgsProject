@@ -354,7 +354,7 @@ namespace GA_Group7_DotMap
                   "South EU: " + aggregatedsouth + " / " + originalsouth + " => " + southpercentage + "\r\n" +
                    "North EU: " + aggregatednorth + " / " + originalnorth + " => " + northpercentage + "\r\n" +
                     "Non EU: " + aggregatednoneu + " / " + originalnoneu + " => " + noneupercentage + "\r\n" +
-                    "Total:" + _aggregatedDots.Count * NumberOfDotsPerGroup + " / " + _dots.Count + " => " + Math.Round(Convert.ToDouble(_aggregatedDots.Count) * NumberOfDotsPerGroup / _dots.Count, 2);
+                    "Total:" + _aggregatedDots.Count * ((NumberOfDotsPerGroup+ NumberOfDotsPerGroup*Setting.MinimumPercentageToShow)/2) + " / " + _dots.Count + " => " + Math.Round(Convert.ToDouble(_aggregatedDots.Count) * ((NumberOfDotsPerGroup + NumberOfDotsPerGroup * Setting.MinimumPercentageToShow) / 2) / _dots.Count, 2);
 
             info += "\r\n" + MeasureLocationAccuracy();
             return info;
