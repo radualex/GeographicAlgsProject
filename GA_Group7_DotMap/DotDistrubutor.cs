@@ -63,7 +63,7 @@ namespace GA_Group7_DotMap
 
         private int CalculateNumberOfDotsPerGroup()
         {
-            return Convert.ToInt32(_dots.Count / ((Setting.BaseNumberOfGroupsPerLine * (_ratio < 1 ? _ratio * _ratio : _ratio)) * (Setting.BaseNumberOfGroupsPerLine * (_ratio < 1 ? _ratio * _ratio : _ratio)))) + 1;
+            return Convert.ToInt32(_dots.Count / ((Setting.BaseNumberOfGroupsPerLine * _ratio) * (Setting.BaseNumberOfGroupsPerLine * _ratio))) + 1;
         }
 
         // for instance, numberOfDotsPerGroup = 10345, return value will be 10000.
