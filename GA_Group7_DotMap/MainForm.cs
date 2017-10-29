@@ -87,7 +87,7 @@ namespace GA_Group7_DotMap
             var height = Height - 40;
             mapPainter.DrawMap(width, height, e.Graphics, ratio);
             dotDistributor.DrawDots(width, height, e.Graphics, ratio);
-            infoForm.UpdateMessage(GetMessage(dotDistributor.NumberOfDotsPerGroup), dotDistributor.MeasureAccuracy());
+            infoForm.UpdateMessage(GetMessage(dotDistributor.NumberOfDotsPerGroup), dotDistributor.MeasureAggregationAccuracy());
         }
 
         private void ZoomIn()

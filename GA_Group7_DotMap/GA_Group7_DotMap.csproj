@@ -48,6 +48,7 @@
   <ItemGroup>
     <Compile Include="CityBlock.cs" />
     <Compile Include="ColorUtil.cs" />
+    <Compile Include="DataGenerator.cs" />
     <Compile Include="InfoForm.cs">
       <SubType>Form</SubType>
     </Compile>

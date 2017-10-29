@@ -31,99 +31,8 @@ namespace GA_Group7_DotMap
         public DotDistrubutor(MapPainter mapPainter)
         {
             _mapPainter = mapPainter;
-            GeneratePositions();
+            new DataGenerator().GenerateData(_dots,_mapPainter);
         }
-
-        // Generate fake data.
-        // return a List<Dot>, where a dot means a person.
-        // and for each dot, it contains position and region.
-        #region generate data.
-
-        /// <summary>
-        /// This method generates positions.
-        /// basically, for each position, it can possibly contians 1 person.
-        /// total number of people is defined by Setting.Propotion * Setting.Propotion
-        /// Note that for each position, it is not necessary to contains a person.
-        /// For each position, it has its own possibility that it contains a person.
-        /// </summary>
-        public void GeneratePositions()
-        {
-            _dots = new List<Dot>();
-            var random = new Random();
-
-            // If there is already raw data, then read the raw data from the disk.
-            if (File.Exists("Data.txt"))
-            {
-                string data = File.ReadAllText("Data.txt");
-                var splits = data.Split('#');
-                var splitsList = splits.ToList();
-                splitsList.RemoveAt(splitsList.Count - 1);
-                foreach (string coordination in splitsList)
-                {
-                    var xy = coordination.Split(',');
-                    GeneratePeople(random, Convert.ToInt32(xy[0]), Convert.ToInt32(xy[1]), Convert.ToInt32(xy[2]));
-                }
-            }
-            // Otherwise create raw data.
-            else
-            {
-                // Raw data, Propotion * Propotion positions, each position can possibly contains 1 person.
-                for (int i = 0; i < Setting.Propotion; i++)
-                {
-                    for (int j = 0; j < Setting.Propotion; j++)
-                    {
-                        for (int k = 0; k < _mapPainter.Blocks.Count; k++)
-                        {
-                            bool inSideEindhoven = false;
-                            bool inSideSomeCityBlock = false;
-                            var polygonPoints = new List<PointF>();
-                            foreach (PointF point in _mapPainter.Blocks[k].Coordinates)
-                            {
-                                polygonPoints.Add(new PointF(point.X * Setting.Propotion, point.Y * Setting.Propotion));
-                            }
-                            var checkPoint = new PointF(i, j);
-                            // for now, we only give 2 different values, 1 or 0, to indicate whether this position is in the busy area.
-                            // 1 means this dot is in busy area, 0 means not.
-                            if (IsInPolygon(checkPoint, polygonPoints))
-                            {
-                                if (k != 0) inSideSomeCityBlock = true;
-                                else inSideEindhoven = true;
-                                if (inSideSomeCityBlock)
-                                {
-                                    File.AppendAllText("Data.txt", i + "," + j + "," + 1 + "#");
-                                    GeneratePeople(random, i, j, 1);
-                                }
-                                else if (inSideEindhoven)
-                                {
-                                    File.AppendAllText("Data.txt", i + "," + j + "," + 0 + "#");
-                                    GeneratePeople(random, i, j, 0);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        // This method generates people based on the positions.
-        private void GeneratePeople(Random random, int i, int j, int inSideCityBlockss)
-        {
-            // if this position is not in the busy area.
-            // we give 2% possibility that there is a person.
-            if ((random.Next(0, 200) > 100 && inSideCityBlockss == 1) || (inSideCityBlockss == 0 && random.Next(0, 100) > 98))
-            {
-                int region = 1;
-                int r = random.Next(0, 100);
-                if (r < Setting.WestPecrentage) region = 1;
-                else if (r < Setting.WestPecrentage + Setting.NorthPercentage) region = 2;
-                else if (r < Setting.WestPecrentage + Setting.SouthPercentage + Setting.NorthPercentage) region = 3;
-                else if (r < Setting.WestPecrentage + Setting.SouthPercentage + Setting.NorthPercentage + Setting.EastPercentage) region = 4;
-                else region = 5;
-                _dots.Add(new Dot((Region)region, new PointF((float)i / Setting.Propotion, (float)j / Setting.Propotion)));
-            }
-        }
-
-        #endregion
 
         private void ApplyAggregationAlgorithm(int width, int height, float ratio)
         {
@@ -148,6 +57,7 @@ namespace GA_Group7_DotMap
                 }
                 return;
             }
+            _groupEuclideans = new List<double>();
             SplitDotsIntoSmallGroups(_dots, 0, 1, 0, 1);
             //ResolvePossibleOverLap();
             //Get dots for each region
@@ -203,16 +113,15 @@ namespace GA_Group7_DotMap
             }
             else
             {
-                var aggregatedDot = GetAggregatedDot(dots);
-                if (aggregatedDot != null)
+                // The return list is design for alternative solutions.
+                // For this solution, the return list always contains exactly 1 aggregated Dot.
+                var aggregatedDots = GetAggregatedDot(dots);
+                if (aggregatedDots != null)
                 {
-                    // The return list is design for alternative solutions.
-                    // For this solution, the return list always contains exactly 1 aggregated Dot.
-                    _aggregatedDots.AddRange(aggregatedDot);
-                    var averageEuclidean = Metrics.CalculateLocation(dots, aggregatedDot.First());
+                    _aggregatedDots.AddRange(aggregatedDots);
+                    var averageEuclidean = Metrics.CalculateLocation(dots, aggregatedDots.First());
                     _groupEuclideans.Add(averageEuclidean);
                 }
-
             }
         }
 
@@ -278,31 +187,69 @@ namespace GA_Group7_DotMap
             return result;
         }
 
-        // Wrost case. O(n^3)
+        // To enable resolve overlap, uncomment line 150.
+        // It is not enabled, because it takes O(n^3) time, which is slow.
+        // We use a greedy implementation.
+        // 1. Try to add as much points as possible in the first time. i.e ignore all overlap dots.
+        // 2. Try to add the overlap dots without effecting others.
         // When resolving the overlap, we ignore the minimum radius requirement, which is set to 4.
         // The minimum raduis will be 1 if overlap occurs.
-        // 1. try to lower the radius, so two overlap dots can fit.
-        // 2. if two dots are fully overlaped (the center is the same),
-        // we make them both radius  = 1 and rearrage the position (one of them will be moved to right with 1 pixel).
+        // Note that there will be no full overlap (same center), becasue we use the center of the minimum cover circle as the position of the dot.
+        // hence, they are all unique and raduis = 1 would be the value which will not cause any overlap with others.
         private void ResolvePossibleOverLap()
         {
-            foreach (AggregatedDot dot1 in _aggregatedDots)
+            float distanceBetweenCenter = 0;
+            List<AggregatedDot> tempAggregatedDots = new List<AggregatedDot>(_aggregatedDots);
+            _aggregatedDots.Clear();
+            List<AggregatedDot> overlapDots = new List<AggregatedDot>();
+            for (int i = 0; i < tempAggregatedDots.Count; i++)
             {
-                foreach (AggregatedDot dot2 in _aggregatedDots)
+                var tempDot = tempAggregatedDots[i];
+                bool containsOverlap = false;
+                foreach (AggregatedDot dot in _aggregatedDots)
                 {
-                    float distanceBetweenCenter = (float)Math.Sqrt(Math.Pow(dot1.Dot.Position.X * _ratio * _width - dot2.Dot.Position.X * _ratio * _width, 2) + Math.Pow(dot1.Dot.Position.Y * _ratio * _height - dot2.Dot.Position.Y * _ratio * _height, 2));
-                    if (dot2.Dot.Position == dot1.Dot.Position)
+                    distanceBetweenCenter = (float)Math.Sqrt(Math.Pow(tempDot.Dot.Position.X * _ratio * _width - dot.Dot.Position.X * _ratio * _width, 2) + Math.Pow(tempDot.Dot.Position.Y * _ratio * _height - dot.Dot.Position.Y * _ratio * _height, 2));
+                    if (distanceBetweenCenter < (tempDot.Raduis + dot.Raduis) / 2)
                     {
-                        dot1.Raduis = 1;
-                        dot2.Raduis = 1;
-                        dot2.Dot.Position = new PointF(dot1.Dot.Position.X + 1 / (_ratio * _width), dot1.Dot.Position.Y);
-                    }
-                    if (distanceBetweenCenter > (dot1.Raduis + dot2.Raduis) / 2)
-                    {
-                        dot1.Raduis = Math.Max(1, Convert.ToInt32((dot1.Raduis / (dot1.Raduis + dot2.Raduis)) * distanceBetweenCenter));
-                        dot2.Raduis = Math.Max(1, Convert.ToInt32((dot2.Raduis / (dot1.Raduis + dot2.Raduis)) * distanceBetweenCenter));
+                        containsOverlap = true;
+                        overlapDots.Add(tempDot);
+                        break;
                     }
                 }
+                if (!containsOverlap) _aggregatedDots.Add(tempDot);
+            }
+
+            foreach (AggregatedDot overlapDot in overlapDots)
+            {
+                List<AggregatedDot> allDotsOverlapWithThisDot = new List<AggregatedDot>();
+                List<float> distances = new List<float>();
+                foreach (AggregatedDot d in _aggregatedDots)
+                {
+                    distanceBetweenCenter = (float)Math.Sqrt(Math.Pow(overlapDot.Dot.Position.X * _ratio * _width - d.Dot.Position.X * _ratio * _width, 2) + Math.Pow(overlapDot.Dot.Position.Y * _ratio * _height - d.Dot.Position.Y * _ratio * _height, 2));
+                    if (distanceBetweenCenter < (overlapDot.Raduis + d.Raduis) / 2)
+                    {
+                        distances.Add(distanceBetweenCenter);
+                        allDotsOverlapWithThisDot.Add(d);
+                    }
+                }
+
+                AggregatedDot closestDot = null;
+                for (int i = 0; i < distances.Count; i++)
+                {
+                    if (distances[i] == distances.Max())
+                    {
+                        distanceBetweenCenter = distances[i];
+                        closestDot = allDotsOverlapWithThisDot[i];
+                        break;
+                    }
+                }
+                // When resolving the overlap, we ignore the minimum radius requirement, which is set to 4 in Setting.cs
+                if (closestDot != null) // it is possible when solving the previous overlap, it also solve this overlap.
+                {
+                    overlapDot.Raduis = Math.Max(1, Convert.ToInt32((overlapDot.Raduis / (overlapDot.Raduis + closestDot.Raduis)) * distanceBetweenCenter));
+                    closestDot.Raduis = Math.Max(1, Convert.ToInt32((closestDot.Raduis / (overlapDot.Raduis + closestDot.Raduis)) * distanceBetweenCenter));
+                }
+                _aggregatedDots.Add(overlapDot);
             }
         }
 
@@ -317,47 +264,10 @@ namespace GA_Group7_DotMap
             }
         }
 
-        // To determine whether a dot is inside a polygon or not.
-        public bool IsInPolygon(PointF checkPoint, List<PointF> polygonPoints)
-        {
-            int counter = 0;
-            int i;
-            double xinters;
-            PointF p1, p2;
-            int pointCount = polygonPoints.Count;
-            p1 = polygonPoints[0];
-            for (i = 1; i <= pointCount; i++)
-            {
-                p2 = polygonPoints[i % pointCount];
-                if (checkPoint.Y > Math.Min(p1.Y, p2.Y) && checkPoint.Y <= Math.Max(p1.Y, p2.Y))
-                {
-                    if (checkPoint.X <= Math.Max(p1.X, p2.X))
-                    {
-                        if (p1.Y != p2.Y)
-                        {
-                            xinters = (checkPoint.Y - p1.Y) * (p2.X - p1.X) / (p2.Y - p1.Y) + p1.X;
-                            if (p1.X == p2.X || checkPoint.X <= xinters)
-                            {
-                                counter++;
-                            }
-                        }
-                    }
-                }
-                p1 = p2;
-            }
-
-            if (counter % 2 == 0)
-            {
-                return false;
-            }
-            else
-            {
-                return true;
-            }
-        }
+        #region measurement
 
         // Measure the accuracy of the aggregation algorithm.
-        public string MeasureAccuracy()
+        public string MeasureAggregationAccuracy()
         {
             double aggregatedwest = 0;
             double aggregatedeast = 0;
@@ -448,6 +358,7 @@ namespace GA_Group7_DotMap
             info += "\r\n" + MeasureLocationAccuracy();
             return info;
         }
+
         public string MeasureLocationAccuracy()
         {
             double sum = 0;
@@ -455,6 +366,8 @@ namespace GA_Group7_DotMap
             var result = sum / _groupEuclideans.Count;
             return "Average euclidean distance: " + result.ToString();
         }
+
+        #endregion
 
         // -----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
