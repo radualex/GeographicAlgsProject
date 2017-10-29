@@ -17,6 +17,7 @@ namespace GA_Group7_DotMap
 
         private List<Dot> _dots = new List<Dot>();
         private List<AggregatedDot> _aggregatedDots = new List<AggregatedDot>();
+        private List<AggregatedDot> _beforeOverlapFix;
 
         private List<Dot> Dots { get { return _dots; } }
 
@@ -58,11 +59,16 @@ namespace GA_Group7_DotMap
             }
             _groupEuclideans = new List<double>();
             SplitDotsIntoSmallGroups(_dots, 0, 1, 0, 1);
-            //ResolvePossibleOverLap();
+            _beforeOverlapFix = new List<AggregatedDot>(_aggregatedDots);
+            ResolvePossibleOverLap();
         }
 
         private int CalculateNumberOfDotsPerGroup()
         {
+<<<<<<< HEAD
+=======
+            //return Convert.ToInt32(_dots.Count / ((Setting.BaseNumberOfGroupsPerLine * (_ratio < 1 ? _ratio * _ratio : _ratio)) * (Setting.BaseNumberOfGroupsPerLine * (_ratio < 1 ? _ratio * _ratio : _ratio)))) + 1;
+>>>>>>> e575a006139273974db31085d61327e68091a3da
             return Convert.ToInt32(_dots.Count / ((Setting.BaseNumberOfGroupsPerLine * _ratio) * (Setting.BaseNumberOfGroupsPerLine * _ratio))) + 1;
         }
 
@@ -349,6 +355,7 @@ namespace GA_Group7_DotMap
                     "Total:" + _aggregatedDots.Count * ((NumberOfDotsPerGroup+ NumberOfDotsPerGroup*Setting.MinimumPercentageToShow)/2) + " / " + _dots.Count + " => " + Math.Round(Convert.ToDouble(_aggregatedDots.Count) * ((NumberOfDotsPerGroup + NumberOfDotsPerGroup * Setting.MinimumPercentageToShow) / 2) / _dots.Count, 2);
 
             info += "\r\n" + MeasureLocationAccuracy();
+            info += "\r\n" + MeasureRadiusAccuracy();
             return info;
         }
 
@@ -358,6 +365,20 @@ namespace GA_Group7_DotMap
             _groupEuclideans.ForEach(x => sum += x);
             var result = sum / _groupEuclideans.Count;
             return "Average euclidean distance: " + result.ToString();
+        }
+
+        public string MeasureRadiusAccuracy()
+        {
+            double sumBefore = 0, sumAfter = 0;
+            foreach(var d in _beforeOverlapFix)
+            {
+                sumBefore += d.Raduis;
+            }
+            foreach (var d in _aggregatedDots)
+            {
+                sumAfter += d.Raduis;
+            }
+            return "Radius ratio: "+ sumAfter + " / " + sumBefore + " => " + (sumAfter / sumBefore).ToString();
         }
 
         #endregion
