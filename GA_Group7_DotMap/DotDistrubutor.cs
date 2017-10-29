@@ -23,7 +23,6 @@ namespace GA_Group7_DotMap
         private int _width = 0;
         private int _height = 0;
         private float _ratio = 1;
-        private double _sumRadius = 0, _nrOfGroups = 0;
         public int NumberOfDotsPerGroup { get; private set; }
 
 
@@ -60,13 +59,6 @@ namespace GA_Group7_DotMap
             _groupEuclideans = new List<double>();
             SplitDotsIntoSmallGroups(_dots, 0, 1, 0, 1);
             //ResolvePossibleOverLap();
-            //Get dots for each region
-            //var countWest = _aggregatedDots.Where(d => d.Dot.Region == Region.West).Count();
-            //var countEast = _aggregatedDots.Where(d => d.Dot.Region == Region.East).Count();
-            //var countNorth = _aggregatedDots.Where(d => d.Dot.Region == Region.North).Count();
-            //var countSouth = _aggregatedDots.Where(d => d.Dot.Region == Region.South).Count();
-            //var countNonEu = _aggregatedDots.Where(d => d.Dot.Region == Region.NonEU).Count();
-
         }
 
         private int CalculateNumberOfDotsPerGroup()
@@ -182,14 +174,13 @@ namespace GA_Group7_DotMap
             else if (maxNumber == noneupercentage) mainGroup = Region.NonEU;
 
             Circle circle = MinimumCoverCircle.GetMinimumCoverCircle(dots);
-            _sumRadius += circle.r; _nrOfGroups++;
             result.Add(new AggregatedDot(new Dot(mainGroup, new PointF((float)circle.c.x, (float)circle.c.y)), Math.Max((int)(circle.r * _ratio * Math.Min(_width, _height)), Setting.MinimumAggregationDotRadius)));
 
             return result;
         }
 
         // To enable resolve overlap, uncomment line 61.
-        // It is not enabled, because it takes O(n^3) time, which is slow.
+        // It is not enabled, because it takes O(n^2) time, which is slow.
         // We use a greedy implementation.
         // 1. Try to add as much points as possible in the first time. i.e ignore all overlap dots.
         // 2. Try to add the overlap dots without effecting others.
