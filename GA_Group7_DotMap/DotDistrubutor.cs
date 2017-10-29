@@ -19,11 +19,11 @@ namespace GA_Group7_DotMap
         private List<AggregatedDot> _aggregatedDots = new List<AggregatedDot>();
 
         private List<Dot> Dots { get { return _dots; } }
-        
+
         private int _width = 0;
         private int _height = 0;
         private float _ratio = 1;
-
+        private double _sumRadius = 0, _nrOfGroups = 0;
         public int NumberOfDotsPerGroup { get; private set; }
 
 
@@ -57,10 +57,18 @@ namespace GA_Group7_DotMap
                 }
                 return;
             }
+            _groupEuclideans = new List<double>();
             SplitDotsIntoSmallGroups(_dots, 0, 1, 0, 1);
             //ResolvePossibleOverLap();
+            //Get dots for each region
+            //var countWest = _aggregatedDots.Where(d => d.Dot.Region == Region.West).Count();
+            //var countEast = _aggregatedDots.Where(d => d.Dot.Region == Region.East).Count();
+            //var countNorth = _aggregatedDots.Where(d => d.Dot.Region == Region.North).Count();
+            //var countSouth = _aggregatedDots.Where(d => d.Dot.Region == Region.South).Count();
+            //var countNonEu = _aggregatedDots.Where(d => d.Dot.Region == Region.NonEU).Count();
+
         }
-        
+
         private int CalculateNumberOfDotsPerGroup()
         {
             return Convert.ToInt32(_dots.Count / ((Setting.BaseNumberOfGroupsPerLine * (_ratio < 1 ? _ratio * _ratio : _ratio)) * (Setting.BaseNumberOfGroupsPerLine * (_ratio < 1 ? _ratio * _ratio : _ratio)))) + 1;
@@ -174,6 +182,7 @@ namespace GA_Group7_DotMap
             else if (maxNumber == noneupercentage) mainGroup = Region.NonEU;
 
             Circle circle = MinimumCoverCircle.GetMinimumCoverCircle(dots);
+            _sumRadius += circle.r; _nrOfGroups++;
             result.Add(new AggregatedDot(new Dot(mainGroup, new PointF((float)circle.c.x, (float)circle.c.y)), Math.Max((int)(circle.r * _ratio * Math.Min(_width, _height)), Setting.MinimumAggregationDotRadius)));
 
             return result;
@@ -346,7 +355,7 @@ namespace GA_Group7_DotMap
                   "South EU: " + aggregatedsouth + " / " + originalsouth + " => " + southpercentage + "\r\n" +
                    "North EU: " + aggregatednorth + " / " + originalnorth + " => " + northpercentage + "\r\n" +
                     "Non EU: " + aggregatednoneu + " / " + originalnoneu + " => " + noneupercentage + "\r\n" +
-                    "Total:" + _aggregatedDots.Count * NumberOfDotsPerGroup + " / " + _dots.Count + " => " + Math.Round(Convert.ToDouble(_aggregatedDots.Count) * NumberOfDotsPerGroup / _dots.Count, 2);
+                    "Total:" + _aggregatedDots.Count * ((NumberOfDotsPerGroup+ NumberOfDotsPerGroup*Setting.MinimumPercentageToShow)/2) + " / " + _dots.Count + " => " + Math.Round(Convert.ToDouble(_aggregatedDots.Count) * ((NumberOfDotsPerGroup + NumberOfDotsPerGroup * Setting.MinimumPercentageToShow) / 2) / _dots.Count, 2);
 
             info += "\r\n" + MeasureLocationAccuracy();
             return info;
