@@ -38,7 +38,7 @@ namespace GA_Group7_DotMap
                 point = new PointF(Position.X * width * ratio + (Math.Abs(1 - ratio)) * width / 2, Position.Y * height * ratio + (Math.Abs(1 - ratio)) * height / 2);
             else
                 point = new PointF(Position.X * width * ratio, Position.Y * height * ratio);
-            graph.FillEllipse(new SolidBrush(Color), point.X, point.Y, raduis, raduis);
+            graph.FillEllipse(new SolidBrush(Color), point.X - raduis / 2, point.Y - raduis / 2, raduis, raduis);
         }
     }
 
